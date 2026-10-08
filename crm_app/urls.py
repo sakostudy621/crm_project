@@ -1,5 +1,11 @@
 from django.urls import path
-from .views import CustomerListView, CustomerDetailView # 作成したCBVをインポート
+from .views import (
+    CustomerListView,
+    CustomerDetailView,
+    CustomerCreateView,
+    CustomerUpdateView,
+    CustomerDeleteView
+)
 
 urlpatterns = [
     # 顧客一覧ページ
@@ -9,5 +15,14 @@ urlpatterns = [
     # 顧客詳細ページ
     # <int:pk>はURLの一部(顧客のID)を変数として受け取るという意味
     # 例： /customer/1/ , /customer/2/
-    path('customer/<int:pk>/', CustomerDetailView.as_view(), name='customer_detail')
+    path('customer/<int:pk>/', CustomerDetailView.as_view(), name='customer_detail'),
+    
+    # 新規登録ページ
+    path('customer/new/', CustomerCreateView.as_view(), name='customer_create'),
+    
+    # 更新ページ
+    path('customer/<int:pk>/edit/', CustomerUpdateView.as_view(), name='customer_update'),
+    
+    # 削除ページ
+    path('customer/<int:pk>/delete/', CustomerDeleteView.as_view(), name='customer_delete'),
 ]
