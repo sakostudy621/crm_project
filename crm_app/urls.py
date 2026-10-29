@@ -4,7 +4,8 @@ from .views import (
     CustomerDetailView,
     CustomerCreateView,
     CustomerUpdateView,
-    CustomerDeleteView
+    CustomerDeleteView,
+    ajax_add_activity,
 )
 
 urlpatterns = [
@@ -25,4 +26,6 @@ urlpatterns = [
     
     # 削除ページ
     path('customer/<int:pk>/delete/', CustomerDeleteView.as_view(), name='customer_delete'),
+    
+    path('ajax/add_activity/', ajax_add_activity, name='ajax_add_activity'),
 ]

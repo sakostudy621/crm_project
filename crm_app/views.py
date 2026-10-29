@@ -1,9 +1,14 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy # リダイレクト先を指定するためにインポート
-from .models import Customer
-from .forms import CustomerForm
+from .models import Customer, Activity
+from .forms import CustomerForm, ActivityForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+
 
 # 顧客一覧ページ用のビュー
 class CustomerListView(LoginRequiredMixin, ListView):
@@ -98,3 +103,29 @@ class CustomerDeleteView(LoginRequiredMixin, DeleteView):
     
     def get_queryset(self):
         return Customer.objects.filter(user=self.request.user)
+    
+@login_required
+@require_POST
+def ajax_add_activity(request):
+    customer_id = request.POST.get('customer_id')
+    customer = get_object_or_404(Customer, id=customer_id)
+    
+    if customer.user != request.user:
+        return JsonResponse({'message':'権限がありません'}, status=403)
+    
+    form = ActivityForm(request.POST)
+    
+    if form.is_valid():
+        activity = form.save(commit=False)
+        activity.customer = customer
+        activity.save()
+        
+        response_data = {
+            'message':'成功しました',
+            'activity_date': activity.activity_date.strftime('%Y-%m-%d'),
+            'status': activity.get_status_display(),
+            'note': activity.note,
+        }
+        return JsonResponse(response_data)
+    else:
+        return JsonResponse({'message':'入力内容に誤りがあります', 'errors': form.errors}, status=400)
