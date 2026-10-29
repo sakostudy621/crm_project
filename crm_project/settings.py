@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os # osをインポート
 from dotenv import load_dotenv # dotenvをインポート
+import dj_database_url
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -29,9 +30,12 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = os.environ.get('SECRET_KEY') # .envから読み込む
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# .envから読み込む(なければFalseになる安全策)
+DEBUG = os.environ.get('DEBUG','False') == 'True'
 
-ALLOWED_HOSTS = []
+# 許可するドメイン。本番ではRenderのURLが入る。
+# '*'は全許可だが、今回は簡易的に設定(実務ではドメイン指定推奨)
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -48,6 +52,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -79,12 +84,17 @@ WSGI_APPLICATION = "crm_project.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# デフォルトはSQLite(開発用)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# もし環境変数DATABASE_URLがあれば(本番環境)、それを使う設定で上書きする
+db_from_env = dj_database_url.config(conn_max_age=600)
+DATABASES['default'].update(db_from_env)
 
 
 # Password validation
@@ -122,6 +132,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+
+# 1.開発中にstaticフォルダに置いたファイルを集める場所
+STATICFILES_DIRS = [BASE_DIR / "static"]
+# (もしstaticフォルダを作っていない場合は、空リスト[]でもOK、またはフォルダを作成)
+
+# 2.本番環境で、全アプリの静的ファイルを集約する場所
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# 3.WhiteNoiseが圧縮して配信するための設定
+STATICFILES_STORAGE = 'whitenoise.strage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
